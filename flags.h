@@ -1,0 +1,14 @@
+//
+// Created by wdymel on 2020-10-25.
+//
+
+#ifndef PART_1_FLAGS_H
+#define PART_1_FLAGS_H
+
+#define REQUIRED_FEATURE_FLEX_BLOCK_GROUPS 0x00200u
+#define REQUIRED_FEATURE_64BIT 0x00080u
+
+#define EXT4_INDEX_FL 0X1000
+
+
+#endif //PART_1_FLAGS_H
