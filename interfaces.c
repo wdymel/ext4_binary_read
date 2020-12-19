@@ -3,10 +3,10 @@
 //
 #include "interfaces.h"
 
-int read_file_into_buffer(FILE * file, char * buffer, long file_offset, unsigned long read_length)
+int read_file_into_buffer(FILE * file, char * buffer, u_int64_t file_offset, u_int64_t read_length)
 // read <read_length> of bytes from stream into <buffer> starting from <file_offset> position
 {
-    unsigned long int read_size;
+    u_int64_t read_size;
     // just some sanity checks
     if (file == NULL || buffer == NULL) return 1;
 
@@ -22,7 +22,8 @@ u_int64_t convert_le_byte_array_to_uint(const char * byte_array, int number_of_b
 {
     u_int64_t result = 0;
     int i;
-    if (number_of_bytes > sizeof(unsigned int)) fprintf(stderr, "Error, int size too small in convert_le_byte_array_to_uint"); //
+    if (number_of_bytes > sizeof(u_int64_t))
+        fprintf(stderr, "Error, int size too small in convert_le_byte_array_to_uint"); //
     for (i=number_of_bytes -1; i >= 0; --i)
     {
         result = result << 8u;

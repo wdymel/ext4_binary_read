@@ -8,6 +8,6 @@
 
 #endif //PART_1_INTERFACES_H
 
-int read_file_into_buffer(FILE * file, char * buffer, long file_offset, unsigned long read_length);
+int read_file_into_buffer(FILE * file, char * buffer, u_int64_t file_offset, u_int64_t read_length);
 u_int64_t convert_le_byte_array_to_uint(const char * byte_array, int number_of_bytes);
 int read_block(FILE * file, u_int64_t block_size, u_int64_t block_id, char * buffer);
