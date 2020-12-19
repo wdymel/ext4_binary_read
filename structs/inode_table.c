@@ -4,6 +4,7 @@
 
 #include "inode_table.h"
 #include "../interfaces.h"
+#include <string.h>
 int InodeTable_new(struct InodeTable * inodeTable, char * sb_bytes)
 {
     // File mode. Any of:
@@ -79,7 +80,11 @@ int InodeTable_new(struct InodeTable * inodeTable, char * sb_bytes)
     //0x4BDFFF 	User-visible flags.
     //0x4B80FF 	User-modifiable flags. Note that while EXT4_JOURNAL_DATA_FL and EXT4_EXTENTS_FL can be set with setattr, they are not in the kernel's EXT4_FL_USER_MODIFIABLE mask, since it needs to handle the setting of these flags in a special manner and they are masked out of the set of flags that are saved directly to i_flags.
     inodeTable->i_flags = convert_le_byte_array_to_uint(sb_bytes + 0x20, sizeof(inodeTable->i_flags));
+    // Inode version. However, if the EA_INODE inode flag is set, this inode stores an extended attribute value and this field contains the upper 32 bits of the attribute value's reference count.
     inodeTable->l_i_version = convert_le_byte_array_to_uint(sb_bytes + 0x24, sizeof(inodeTable->l_i_version));
+    // Block map or extent tree. See the section "The Contents of inode.i_block".
+    inodeTable->i_block;
+    memcpy(inodeTable->i_block, sb_bytes + 0x28, 60);
     // File version (for NFS).
     inodeTable->i_generation = convert_le_byte_array_to_uint(sb_bytes + 0x64, sizeof(inodeTable->i_generation));
     // Lower 32-bits of extended attribute block. ACLs are of course one of many possible extended attributes; I think the name of this field is a result of the first use of extended attributes being for ACLs.
@@ -120,4 +125,49 @@ int InodeTable_new(struct InodeTable * inodeTable, char * sb_bytes)
     inodeTable->i_version_hi = convert_le_byte_array_to_uint(sb_bytes + 0x98, sizeof(inodeTable->i_version_hi));
     // Project ID.
     inodeTable->i_projid = convert_le_byte_array_to_uint(sb_bytes + 0x9C, sizeof(inodeTable->i_projid));
+    return 0;
+}
+
+int ext4_extent_header_new(struct ext4_extent_header *ext4_extent_header, char *bytes) {
+    ext4_extent_header->eh_magic = convert_le_byte_array_to_uint(bytes + 0x0, sizeof(ext4_extent_header->eh_magic));
+    ext4_extent_header->eh_entries = convert_le_byte_array_to_uint(bytes + 0x2, sizeof(ext4_extent_header->eh_entries));
+    ext4_extent_header->eh_max = convert_le_byte_array_to_uint(bytes + 0x4, sizeof(ext4_extent_header->eh_max));
+    ext4_extent_header->eh_depth = convert_le_byte_array_to_uint(bytes + 0x6, sizeof(ext4_extent_header->eh_depth));
+    ext4_extent_header->eh_generation = convert_le_byte_array_to_uint(bytes + 0x8, sizeof(ext4_extent_header->eh_generation));
+    return ext4_extent_header->eh_magic != 0xf30a;
+}
+
+int ext4_extent_idx_new(struct ext4_extent_idx *ext4_extend_idx, char *bytes) {
+    ext4_extend_idx->ei_block = convert_le_byte_array_to_uint(bytes + 0x0, sizeof(ext4_extend_idx->ei_block));
+    ext4_extend_idx->ei_leaf_lo = convert_le_byte_array_to_uint(bytes + 0x4, sizeof(ext4_extend_idx->ei_leaf_lo));
+    ext4_extend_idx->ei_leaf_hi = convert_le_byte_array_to_uint(bytes + 0x8, sizeof(ext4_extend_idx->ei_leaf_hi));
+    return 0;
+}
+
+int ext4_extent_new(struct ext4_extent *ext4_extent, char *bytes) {
+    ext4_extent->ee_block = convert_le_byte_array_to_uint(bytes + 0x0, sizeof(ext4_extent->ee_block));
+    ext4_extent->ee_len = convert_le_byte_array_to_uint(bytes + 0x4, sizeof(ext4_extent->ee_len));
+    ext4_extent->ee_start_hi = convert_le_byte_array_to_uint(bytes + 0x6, sizeof(ext4_extent->ee_start_hi));
+    ext4_extent->ee_start_lo = convert_le_byte_array_to_uint(bytes + 0x8, sizeof(ext4_extent->ee_start_lo));
+    ext4_extent->ee_start_u64 = ((u_int64_t) ext4_extent->ee_start_hi << 32u) + ext4_extent->ee_start_lo;
+    return 0;
+}
+
+int ext4_dir_entry_new(struct ext4_dir_entry *ext4_dir_entry, char *bytes) {
+    ext4_dir_entry->inode = convert_le_byte_array_to_uint(bytes + 0x0, sizeof(ext4_dir_entry->inode));
+    ext4_dir_entry->rec_len = convert_le_byte_array_to_uint(bytes + 0x4, sizeof(ext4_dir_entry->rec_len));
+    ext4_dir_entry->name_len = convert_le_byte_array_to_uint(bytes + 0x6, sizeof(ext4_dir_entry->name_len));
+    ext4_dir_entry->name = malloc(ext4_dir_entry->name_len);
+    strncpy(ext4_dir_entry->name, bytes + 0x8, ext4_dir_entry->name_len);
+    return 0;
+}
+
+int ext4_dir_entry_2_new(struct ext4_dir_entry_2 *ext4_dir_entry_2, char *bytes) {
+    ext4_dir_entry_2->inode = convert_le_byte_array_to_uint(bytes + 0x0, sizeof(ext4_dir_entry_2->inode));
+    ext4_dir_entry_2->rec_len = convert_le_byte_array_to_uint(bytes + 0x4, sizeof(ext4_dir_entry_2->rec_len));
+    ext4_dir_entry_2->name_len = convert_le_byte_array_to_uint(bytes + 0x6, sizeof(ext4_dir_entry_2->name_len));
+    ext4_dir_entry_2->file_type = convert_le_byte_array_to_uint(bytes + 0x7, sizeof(ext4_dir_entry_2->file_type));
+    ext4_dir_entry_2->name = malloc(ext4_dir_entry_2->name_len);
+    strncpy(ext4_dir_entry_2->name, bytes + 0x8, ext4_dir_entry_2->name_len);
+    return 0;
 }

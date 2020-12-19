@@ -8,55 +8,62 @@
 
 // region inode constants
 // region u_int16_t i_mode
-#define S_IXOTH 0x1
-#define S_IWOTH 0x2
-#define S_IROTH 0x4
-#define S_IXGRP 0x8
-#define S_IWGRP 0x10
-#define S_IRGRP 0x20
-#define S_IXUSR 0x40
-#define S_IWUSR 0x80
-#define S_IRUSR 0x100
-#define S_ISVTX 0x200
-#define S_ISGID 0x400
-#define S_ISUID 0x800
-#define S_IFIFO 0x1000
-#define S_IFCHR 0x2000
-#define S_IFDIR 0x4000
-#define S_IFBLK 0x6000
-#define S_IFREG 0x8000
-#define S_IFLNK 0xA000
-#define S_IFSOCK 0xC000
+// File mode. Any of:
+
+static const u_int16_t S_IXOTH = 0x1; // (Others may execute)
+static const u_int16_t S_IWOTH = 0x2; // (Others may write)
+static const u_int16_t S_IROTH = 0x4; // (Others may read)
+static const u_int16_t S_IXGRP = 0x8; // (Group members may execute)
+static const u_int16_t S_IWGRP = 0x10; // (Group members may write)
+static const u_int16_t S_IRGRP = 0x20; // (Group members may read)
+static const u_int16_t S_IXUSR = 0x40; // (Owner may execute)
+static const u_int16_t S_IWUSR = 0x80; // (Owner may write)
+static const u_int16_t S_IRUSR = 0x100; // (Owner may read)
+static const u_int16_t S_ISVTX = 0x200; // (Sticky bit)
+static const u_int16_t S_ISGID = 0x400; // (Set GID)
+static const u_int16_t S_ISUID = 0x800; // (Set UID)
+//These are mutually-exclusive file types:
+
+static const u_int16_t S_IFIFO = 0x1000; // (FIFO)
+static const u_int16_t S_IFCHR = 0x2000; // (Character device)
+static const u_int16_t S_IFDIR = 0x4000; // (Directory)
+static const u_int16_t S_IFBLK = 0x6000; // (Block device)
+static const u_int16_t S_IFREG = 0x8000; // (Regular file)
+static const u_int16_t S_IFLNK = 0xA000; // (Symbolic link)
+static const u_int16_t S_IFSOCK = 0xC000; // (Socket)
 // endregion u_int16_t i_mode flags
+
 // region u_int_32_t i_flags flags
-#define EXT4_SECRM_FL 0x1
-#define EXT4_UNRM_FL 0x2
-#define EXT4_COMPR_FL 0x4
-#define EXT4_SYNC_FL 0x8
-#define EXT4_IMMUTABLE_FL 0x10
-#define EXT4_APPEND_FL 0x20
-#define EXT4_NODUMP_FL 0x40
-#define EXT4_NOATIME_FL 0x80
-#define EXT4_DIRTY_FL 0x100
-#define EXT4_COMPRBLK_FL 0x200
-#define EXT4_NOCOMPR_FL 0x400
-#define EXT4_ENCRYPT_FL 0x800
-#define EXT4_INDEX_FL 0x1000
-#define EXT4_IMAGIC_FL 0x2000
-#define EXT4_JOURNAL_DATA_FL 0x4000
-#define EXT4_NOTAIL_FL 0x8000
-#define EXT4_DIRSYNC_FL 0x10000
-#define EXT4_TOPDIR_FL 0x20000
-#define EXT4_HUGE_FILE_FL 0x40000
-#define EXT4_EXTENTS_FL 0x80000
-#define EXT4_EA_INODE_FL 0x200000
-#define EXT4_EOFBLOCKS_FL 0x400000
-#define EXT4_SNAPFILE_FL 0x01000000
-#define EXT4_SNAPFILE_DELETED_FL 0x04000000
-#define EXT4_SNAPFILE_SHRUNK_FL 0x08000000
-#define EXT4_INLINE_DATA_FL 0x10000000
-#define EXT4_PROJINHERIT_FL 0x20000000
-#define EXT4_RESERVED_FL 0x80000000
+// Inode flags. Any of:
+
+static const u_int32_t EXT4_SECRM_FL = 0x1; // This file requires secure deletion (EXT4_SECRM_FL). (not implemented)
+static const u_int32_t EXT4_UNRM_FL = 0x2; // This file should be preserved, should undeletion be desired (EXT4_UNRM_FL). (not implemented)
+static const u_int32_t EXT4_COMPR_FL = 0x4; // File is compressed (EXT4_COMPR_FL). (not really implemented)
+static const u_int32_t EXT4_SYNC_FL = 0x8; // All writes to the file must be synchronous (EXT4_SYNC_FL).
+static const u_int32_t EXT4_IMMUTABLE_FL = 0x10; // File is immutable (EXT4_IMMUTABLE_FL).
+static const u_int32_t EXT4_APPEND_FL = 0x20; // File can only be appended (EXT4_APPEND_FL).
+static const u_int32_t EXT4_NODUMP_FL = 0x40; // The dump(1) utility should not dump this file (EXT4_NODUMP_FL).
+static const u_int32_t EXT4_NOATIME_FL = 0x80; // Do not update access time (EXT4_NOATIME_FL).
+static const u_int32_t EXT4_DIRTY_FL = 0x100; // Dirty compressed file (EXT4_DIRTY_FL). (not used)
+static const u_int32_t EXT4_COMPRBLK_FL = 0x200; // File has one or more compressed clusters (EXT4_COMPRBLK_FL). (not used)
+static const u_int32_t EXT4_NOCOMPR_FL = 0x400; // Do not compress file (EXT4_NOCOMPR_FL). (not used)
+static const u_int32_t EXT4_ENCRYPT_FL = 0x800; // Encrypted inode (EXT4_ENCRYPT_FL). This bit value previously was EXT4_ECOMPR_FL (compression error), which was never used.
+static const u_int32_t EXT4_INDEX_FL = 0x1000; // Directory has hashed indexes (EXT4_INDEX_FL).
+static const u_int32_t EXT4_IMAGIC_FL = 0x2000; // AFS magic directory (EXT4_IMAGIC_FL).
+static const u_int32_t EXT4_JOURNAL_DATA_FL = 0x4000; // File data must always be written through the journal (EXT4_JOURNAL_DATA_FL).
+static const u_int32_t EXT4_NOTAIL_FL = 0x8000; // File tail should not be merged (EXT4_NOTAIL_FL). (not used by ext4)
+static const u_int32_t EXT4_DIRSYNC_FL = 0x10000; // All directory entry data should be written synchronously (see dirsync) (EXT4_DIRSYNC_FL).
+static const u_int32_t EXT4_TOPDIR_FL = 0x20000; // Top of directory hierarchy (EXT4_TOPDIR_FL).
+static const u_int32_t EXT4_HUGE_FILE_FL = 0x40000; // This is a huge file (EXT4_HUGE_FILE_FL).
+static const u_int32_t EXT4_EXTENTS_FL = 0x80000; // Inode uses extents (EXT4_EXTENTS_FL).
+static const u_int32_t EXT4_EA_INODE_FL = 0x200000; // Inode stores a large extended attribute value in its data blocks (EXT4_EA_INODE_FL).
+static const u_int32_t EXT4_EOFBLOCKS_FL = 0x400000; // This file has blocks allocated past EOF (EXT4_EOFBLOCKS_FL). (deprecated)
+static const u_int32_t EXT4_SNAPFILE_FL = 0x01000000; // Inode is a snapshot (EXT4_SNAPFILE_FL). (not in mainline)
+static const u_int32_t EXT4_SNAPFILE_DELETED_FL = 0x04000000; // Snapshot is being deleted (EXT4_SNAPFILE_DELETED_FL). (not in mainline)
+static const u_int32_t EXT4_SNAPFILE_SHRUNK_FL = 0x08000000; // Snapshot shrink has completed (EXT4_SNAPFILE_SHRUNK_FL). (not in mainline)
+static const u_int32_t EXT4_INLINE_DATA_FL = 0x10000000; // Inode has inline data (EXT4_INLINE_DATA_FL).
+static const u_int32_t EXT4_PROJINHERIT_FL = 0x20000000; // Create children with the same project ID (EXT4_PROJINHERIT_FL).
+static const u_int32_t EXT4_RESERVED_FL = 0x80000000; // Reserved for ext4 library (EXT4_RESERVED_FL).
 //Aggregate flags:
 //0x4BDFFF 	User-visible flags.
 //0x4B80FF 	User-modifiable flags. Note that while EXT4_JOURNAL_DATA_FL and EXT4_EXTENTS_FL can be set with setattr, they are not in the kernel's EXT4_FL_USER_MODIFIABLE mask, since it needs to handle the setting of these flags in a special manner and they are masked out of the set of flags that are saved directly to i_flags.
@@ -151,6 +158,49 @@ struct InodeTable {  // TODO add 0x24, 0x28, and 0x74 manually
     u_int32_t i_version_hi;  // Upper 32-bits for version number.
     u_int32_t i_projid;  // Project ID.
 };
-
 int InodeTable_new(struct InodeTable * inodeTable, char * sb_bytes);
+
+struct ext4_extent_header {
+    u_int16_t eh_magic;  // Magic number, 0xF30A.
+    u_int16_t eh_entries; // Number of valid entries following the header.
+    u_int16_t eh_max;  // Maximum number of entries that could follow the header.
+    u_int16_t eh_depth;  // Depth of this extent node in the extent tree. 0 = this extent node points to data blocks; otherwise, this extent node points to other extent nodes. The extent tree can be at most 5 levels deep: a logical block number can be at most 2^32, and the smallest n that satisfies 4*(((blocksize - 12)/12)^n) >= 2^32 is 5.
+    u_int32_t eh_generation;  // Generation of the tree. (Used by Lustre, but not standard ext4).
+};
+int ext4_extent_header_new(struct ext4_extent_header * ext4_extent_header, char * bytes);
+
+struct ext4_extent_idx {
+    u_int32_t ei_block;  // This index node covers file blocks from 'block' onward.
+    u_int32_t ei_leaf_lo;  // Lower 32-bits of the block number of the extent node that is the next level lower in the tree. The tree node pointed to can be either another internal node or a leaf node, described below.
+    u_int16_t ei_leaf_hi;  // Upper 16-bits of the previous field.
+    // 0xA __u16 ei_unused;  //
+};
+int ext4_extent_idx_new(struct ext4_extent_idx * ext4_extend_idx, char * bytes);
+
+struct ext4_extent {
+    u_int32_t ee_block;  // First file block number that this extent covers.
+    u_int16_t ee_len;  // umber of blocks covered by extent. If the value of this field is <= 32768, the extent is initialized. If the value of the field is > 32768, the extent is uninitialized and the actual extent length is ee_len - 32768. Therefore, the maximum length of a initialized extent is 32768 blocks, and the maximum length of an uninitialized extent is 32767.
+    u_int16_t ee_start_hi;  // Upper 16-bits of the block number to which this extent points.
+    u_int32_t ee_start_lo;  // Lower 32-bits of the block number to which this extent points.
+    u_int64_t ee_start_u64;
+};
+int ext4_extent_new(struct ext4_extent * ext4_extent, char * bytes);
+
+struct ext4_dir_entry {
+    u_int32_t inode;
+    u_int16_t rec_len;
+    u_int16_t name_len;
+    u_char * name;
+};
+int ext4_dir_entry_new(struct ext4_dir_entry * ext4_dir_entry, char * bytes);
+
+struct ext4_dir_entry_2 {
+    u_int32_t inode;
+    u_int16_t rec_len;
+    u_int8_t name_len;
+    u_int8_t file_type;
+    u_char * name;
+};
+int ext4_dir_entry_2_new(struct ext4_dir_entry_2 * ext4_dir_entry_2, char * bytes);
+
 #endif //EXT4_BINARY_READ_INODE_TABLE_H

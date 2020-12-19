@@ -9,7 +9,9 @@
 // super block flags
 
 static const u_int32_t RO_COMPAT_SPARSE_SUPER = 0x1;
+static const u_int32_t INCOMPAT_FILETYPE = 0x2;
 static const u_int32_t INCOMPAT_META_BG = 0x10;
+static const u_int32_t INCOMPAT_DIRDATA = 0x1000;
 
 struct SuperBlock {  // numbers in the comments show bits that fields occupy in the superblock
     u_int32_t s_inodes_count;  // Total inode count.
