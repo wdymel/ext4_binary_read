@@ -162,12 +162,15 @@ int ext4_dir_entry_new(struct ext4_dir_entry *ext4_dir_entry, char *bytes) {
     return 0;
 }
 
-int ext4_dir_entry_2_new(struct ext4_dir_entry_2 *ext4_dir_entry_2, char *bytes) {
+int ext4_dir_entry_2_new(struct ext4_dir_entry_2 *ext4_dir_entry_2, char *bytes, u_int8_t load_name) {
     ext4_dir_entry_2->inode = convert_le_byte_array_to_uint(bytes + 0x0, sizeof(ext4_dir_entry_2->inode));
     ext4_dir_entry_2->rec_len = convert_le_byte_array_to_uint(bytes + 0x4, sizeof(ext4_dir_entry_2->rec_len));
     ext4_dir_entry_2->name_len = convert_le_byte_array_to_uint(bytes + 0x6, sizeof(ext4_dir_entry_2->name_len));
     ext4_dir_entry_2->file_type = convert_le_byte_array_to_uint(bytes + 0x7, sizeof(ext4_dir_entry_2->file_type));
-    ext4_dir_entry_2->name = malloc(ext4_dir_entry_2->name_len);
-    strncpy(ext4_dir_entry_2->name, bytes + 0x8, ext4_dir_entry_2->name_len);
+    if (load_name)
+    {
+        ext4_dir_entry_2->name = malloc(ext4_dir_entry_2->name_len);
+        strncpy(ext4_dir_entry_2->name, bytes + 0x8, ext4_dir_entry_2->name_len);
+    }
     return 0;
 }

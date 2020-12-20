@@ -201,6 +201,6 @@ struct ext4_dir_entry_2 {
     u_int8_t file_type;
     u_char * name;
 };
-int ext4_dir_entry_2_new(struct ext4_dir_entry_2 * ext4_dir_entry_2, char * bytes);
+int ext4_dir_entry_2_new(struct ext4_dir_entry_2 * ext4_dir_entry_2, char * bytes, u_int8_t load_name);
 
 #endif //EXT4_BINARY_READ_INODE_TABLE_H

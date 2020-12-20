@@ -10,6 +10,7 @@
 #include "structs/super_block.h"
 #include "structs/group_descriptor.h"
 #include "structs/inode_table.h"
+#include <string.h>
 
 static const char DRIVE_MOUNT[] = "binary2.img"; // path on which the partition is mounted from
 
@@ -65,6 +66,67 @@ void print_block(char * buffer, struct SuperBlock * superBlock)
     }
 }
 
+struct dir_element {
+    uint64_t node_id;
+    uint8_t name_len;
+    u_char * name;
+};
+
+int get_directory(FILE * file, struct SuperBlock * superBlock, struct InodeTable * inodeTable, struct dir_element ** dir_elements)
+{
+    if ((inodeTable->i_mode & S_IFDIR) == 0) return 1; // if given inode is not a directory
+    if (inodeTable->i_flags & EXT4_INDEX_FL) printf("HASH TREE DIRECTORY");
+    // load extent header
+    struct ext4_extent_header ext4_extent_header;
+    if (ext4_extent_header_new(&ext4_extent_header, inodeTable->i_block + 0x0)) return 1;
+    // load 1st extent entry TODO add support for inodes spanning multiple extents
+    struct ext4_extent ext4_extent;
+    ext4_extent_new(&ext4_extent, inodeTable->i_block + 12 * 1);
+    char * buffer = malloc(superBlock->s_block_size);  // for storing blocks
+    uint64_t entries_count = 0;
+    for (uint block = 0; block < ext4_extent.ee_len; ++block)  // iterate over blocks this inode occupies
+    // iterate over whole extent list to count number of directories
+    {
+        read_block(file, superBlock->s_block_size, ext4_extent.ee_start_u64 + block, buffer);
+        uint64_t pointer = 0;
+        while(pointer < superBlock->s_block_size)
+            // last 12 bytes is a phony ext4_dir_entry, which in fact is an ext4_dir_entry_tail which contains checksum
+        {
+            struct ext4_dir_entry_2 ext4_dir_entry_2;
+            ext4_dir_entry_2_new(&ext4_dir_entry_2, buffer + pointer, 0);
+            if (ext4_dir_entry_2.inode)  // if entry is used it has non zero value
+                entries_count += 1;
+            pointer += ext4_dir_entry_2.rec_len;
+        }
+    }
+    // alloc memory for all directory entries
+    *dir_elements = malloc(sizeof(struct dir_element) * entries_count);
+//    struct dir_element * elements = malloc(sizeof(struct dir_element) * entries_count);
+    uint64_t current_entry = 0;
+    for (uint block = 0; block < ext4_extent.ee_len; ++block)  // iterate over blocks this inode occupies
+    // iterate over directory again, this time coping names and inode numbers
+    {
+        read_block(file, superBlock->s_block_size, ext4_extent.ee_start_u64 + block, buffer);
+        uint64_t pointer = 0;
+        while(pointer < superBlock->s_block_size)
+            // last 12 bytes is a phony ext4_dir_entry, which in fact is an ext4_dir_entry_tail which contains checksum
+        {
+            struct ext4_dir_entry_2 ext4_dir_entry_2;
+            ext4_dir_entry_2_new(&ext4_dir_entry_2, buffer + pointer, 1);
+            if (ext4_dir_entry_2.inode)  // if entry is used it has non zero value
+            {
+                (*dir_elements)[current_entry].node_id = ext4_dir_entry_2.inode;
+                (*dir_elements)[current_entry].name = ext4_dir_entry_2.name;
+                (*dir_elements)[current_entry].name_len = ext4_dir_entry_2.name_len;
+                current_entry += 1;
+            }
+            pointer += ext4_dir_entry_2.rec_len;
+        }
+    }
+    free(buffer);
+    return entries_count;
+}
+
 int print_directory(FILE * file, struct SuperBlock * superBlock, struct InodeTable * inodeTable)
 {
     if ((inodeTable->i_mode & S_IFDIR) == 0) return 1; // if given inode is not a directory
@@ -86,7 +148,7 @@ int print_directory(FILE * file, struct SuperBlock * superBlock, struct InodeTab
             // last 12 bytes is a phony ext4_dir_entry, which in fact is an ext4_dir_entry_tail which contains checksum
         {
             struct ext4_dir_entry_2 ext4_dir_entry_2;
-            ext4_dir_entry_2_new(&ext4_dir_entry_2, buffer + pointer );
+            ext4_dir_entry_2_new(&ext4_dir_entry_2, buffer + pointer, 1);
             if (ext4_dir_entry_2.inode)
                 printf("%02x \"%.*s\" %d\n", ext4_dir_entry_2.file_type, ext4_dir_entry_2.name_len, ext4_dir_entry_2.name, ext4_dir_entry_2.inode);
             pointer += ext4_dir_entry_2.rec_len;
@@ -95,6 +157,58 @@ int print_directory(FILE * file, struct SuperBlock * superBlock, struct InodeTab
     }
     free(buffer);
     return 0;
+}
+
+int shell_load_directory(FILE * file, struct SuperBlock * superBlock, struct InodeTable * inodeTable,
+        uint64_t * current_inode_id, uint64_t next_inode_id)
+{
+    if (load_inode_table(file, superBlock, inodeTable, next_inode_id))
+    {
+        printf("Error loading directory\n");
+        return load_inode_table(file, superBlock, inodeTable, *current_inode_id);
+    }
+    else
+        *current_inode_id = next_inode_id;
+    return 0;
+}
+
+void shell(FILE * file, struct SuperBlock * superBlock)
+{
+    char buffer[255];
+    static uint64_t root_inode_id = 2;  // 2 is always root directory
+    uint64_t current_inode_id = root_inode_id;
+    struct InodeTable current_directory;
+    if (load_inode_table(file, superBlock, &current_directory, 130049))
+    {
+        printf("Error loading root directory");
+        return;
+    }
+    while (1)
+    {
+        scanf("%s", buffer);
+        if (strcmp(buffer, "ls") == 0)
+        {
+            struct dir_element * dir_elements;
+            uint64_t elements_count = get_directory(file, superBlock, &current_directory, &dir_elements);
+            for (uint64_t i = 0; i < elements_count; ++i)
+                printf("%.*s %d\n", dir_elements[i].name_len, dir_elements[i].name, (int)dir_elements[i].node_id);
+//            print_directory(file, superBlock, &current_directory);
+        }
+        else if (strcmp(buffer, "cd") == 0)
+        {
+            if (shell_load_directory(file, superBlock, &current_directory, &current_inode_id, root_inode_id))
+                return;
+        }
+        else if (strncmp(buffer, "cd ", 3) == 0)
+        {
+
+        }
+        else if (strcmp(buffer, "exit") == 0)
+            break;
+        else
+            printf("%s", buffer);
+    }
+    printf("Bye\n");
 }
 
 int main() {
@@ -114,57 +228,7 @@ int main() {
     if (superBlock.s_feature_incompat & INCOMPAT_FILETYPE) printf("INCOMPAT_FILETYPE filesystem uses ext4_dir_entry_2\n");
     if (superBlock.s_feature_incompat & INCOMPAT_DIRDATA) printf("INCOMPAT_DIRDATA\n");
 
-
-
-    // load root directory (inode no. 2 is always root)
-    struct InodeTable inodeTable;
-    load_inode_table(file, &superBlock, &inodeTable, 260097);
-
-    print_directory(file, &superBlock, &inodeTable);
-
-//    if (inodeTable.i_flags & EXT4_INDEX_FL)
-//        printf("Inode using hash trees");
-//
-//    // load extent header
-//    struct ext4_extent_header ext4_extent_header;
-//    ext4_extent_header_new(&ext4_extent_header, inodeTable.i_block + 0x0);
-//
-//    // load 1st extent entry
-//    struct ext4_extent ext4_extent;
-//    ext4_extent_new(&ext4_extent, inodeTable.i_block + 12 * 1);
-//
-//    // load data block that extent is pointing at
-//    char * buffer = malloc(superBlock.s_block_size);
-//    read_block(file, superBlock.s_block_size, ext4_extent.ee_start_u64, buffer);
-//    print_block(buffer, &superBlock);
-//
-//    // load linear directory header
-//    uint64_t pointer = 0;
-//    while(pointer < superBlock.s_block_size - 12)
-//    {
-//        struct ext4_dir_entry_2 ext4_dir_entry_2;
-//        ext4_dir_entry_2_new(&ext4_dir_entry_2, buffer + pointer );
-//        printf("%02x \"%.*s\" %d\n", ext4_dir_entry_2.file_type, ext4_dir_entry_2.name_len, ext4_dir_entry_2.name, ext4_dir_entry_2.inode);
-//        pointer += ext4_dir_entry_2.rec_len;
-//        free(ext4_dir_entry_2.name);
-//    }  // last 12 bytes is a phony ext4_dir_entry, which in fact is ext4_dir_entry_tail
-//
-//
-//    struct InodeTable test_file_inode_tables;
-//    load_inode_table(file, &superBlock, &test_file_inode_tables, 13);
-//
-//    // load extent header
-//    struct ext4_extent_header test_file_extent_header;
-//    ext4_extent_header_new(&test_file_extent_header, test_file_inode_tables.i_block + 0x0);
-//
-//    // load 1st extent entry
-//    struct ext4_extent test_file_extent;
-//    ext4_extent_new(&test_file_extent, test_file_inode_tables.i_block + 12 * 1);
-//    read_block(file, superBlock.s_block_size, test_file_extent.ee_start_u64, buffer);
-//    print_block(buffer, &superBlock);
-//
-//    free(buffer);
-
+    shell(file, &superBlock);
     fclose(file);
     return 0;
 }
