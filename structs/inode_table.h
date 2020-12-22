@@ -194,6 +194,15 @@ struct ext4_dir_entry {
 };
 int ext4_dir_entry_new(struct ext4_dir_entry * ext4_dir_entry, char * bytes);
 
+const static u_int8_t DEFT_UNKNOWN = 0x0;
+const static u_int8_t DEFT_REGULAR = 0x1;
+const static u_int8_t DEFT_DIRECTORY = 0x2;
+const static u_int8_t DEFT_CHAR_DEV = 0x3;
+const static u_int8_t DEFT_BLOCK_DEV = 0x4;
+const static u_int8_t DEFT_FIFO = 0x5;
+const static u_int8_t DEFT_SOCKET = 0x6;
+const static u_int8_t DEFT_SYMLINK = 0x7;
+
 struct ext4_dir_entry_2 {
     u_int32_t inode;
     u_int16_t rec_len;
