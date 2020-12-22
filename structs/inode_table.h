@@ -157,6 +157,8 @@ struct InodeTable {  // TODO add 0x24, 0x28, and 0x74 manually
     u_int32_t i_crtime_extra;  // Extra file creation time bits. This provides sub-second precision.
     u_int32_t i_version_hi;  // Upper 32-bits for version number.
     u_int32_t i_projid;  // Project ID.
+    u_int64_t i_size_u64;
+    u_int64_t i_blocks_u64;
 };
 int InodeTable_new(struct InodeTable * inodeTable, char * sb_bytes);
 
@@ -173,6 +175,7 @@ struct ext4_extent_idx {
     u_int32_t ei_block;  // This index node covers file blocks from 'block' onward.
     u_int32_t ei_leaf_lo;  // Lower 32-bits of the block number of the extent node that is the next level lower in the tree. The tree node pointed to can be either another internal node or a leaf node, described below.
     u_int16_t ei_leaf_hi;  // Upper 16-bits of the previous field.
+    u_int64_t ei_leaf_u64;
     // 0xA __u16 ei_unused;  //
 };
 int ext4_extent_idx_new(struct ext4_extent_idx * ext4_extend_idx, char * bytes);

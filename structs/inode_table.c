@@ -125,6 +125,9 @@ int InodeTable_new(struct InodeTable * inodeTable, char * sb_bytes)
     inodeTable->i_version_hi = convert_le_byte_array_to_uint(sb_bytes + 0x98, sizeof(inodeTable->i_version_hi));
     // Project ID.
     inodeTable->i_projid = convert_le_byte_array_to_uint(sb_bytes + 0x9C, sizeof(inodeTable->i_projid));
+
+    inodeTable->i_size_u64 = ((u_int64_t) inodeTable->i_size_high << 32u) + inodeTable->i_size_lo;
+    inodeTable->i_blocks_u64 = ((u_int64_t) inodeTable->l_i_blocks_high << 32u) + inodeTable->i_blocks_lo;
     return 0;
 }
 
@@ -141,6 +144,7 @@ int ext4_extent_idx_new(struct ext4_extent_idx *ext4_extend_idx, char *bytes) {
     ext4_extend_idx->ei_block = convert_le_byte_array_to_uint(bytes + 0x0, sizeof(ext4_extend_idx->ei_block));
     ext4_extend_idx->ei_leaf_lo = convert_le_byte_array_to_uint(bytes + 0x4, sizeof(ext4_extend_idx->ei_leaf_lo));
     ext4_extend_idx->ei_leaf_hi = convert_le_byte_array_to_uint(bytes + 0x8, sizeof(ext4_extend_idx->ei_leaf_hi));
+    ext4_extend_idx->ei_leaf_u64 = ((u_int64_t) ext4_extend_idx->ei_leaf_hi << 32u) + ext4_extend_idx->ei_leaf_lo;
     return 0;
 }
 
